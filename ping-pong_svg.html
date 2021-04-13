@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <svg id="svg" height="500" width="800"></svg>
+
+    <script>
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.getElementById("svg");
+        
+        const width = 800;
+        const height = 450;
+        const racketWidth = 15;
+        const racketHeigt = 100;
+        const radius = 25;
+        var scoreLeft = 0;
+        var scoreRight = 0;
+        var speedX = 2;                 //начальная скорость по х
+        var speedY = 1;                 //начальная скорость по y
+        var xPos = (width - 6) / 2;
+        var yPos = (height + 26) / 2
+        var fieldWidth = width - 6;
+        var fieldHeight = height - 53;
+        var topRacketLeft = 60;
+        var topRacketRight = 60;
+
+        // создаем задний фон игры
+        let rect = document.createElementNS(svgNS, "rect");
+        rect.setAttributeNS(null, "x", 0);
+        rect.setAttributeNS(null, "y", 0);
+        rect.setAttributeNS(null, "width", width);
+        rect.setAttributeNS(null, "height", height);
+        rect.setAttributeNS(null, "fill", "#ddf3dd");
+        rect.setAttributeNS(null, "stroke", "black");
+        svg.appendChild(rect);
+
+        // создаем игровое поле
+        let field = document.createElementNS(svgNS, "rect");
+        field.setAttributeNS(null, "x", 3);
+        field.setAttributeNS(null, "y", 50);
+        field.setAttributeNS(null, "width", fieldWidth);
+        field.setAttributeNS(null, "height", fieldHeight);
+        field.setAttributeNS(null, "fill", "green");
+        field.setAttributeNS(null, "stroke", "black");
+        field.setAttributeNS(null, "stroke-width", 3);
+        svg.appendChild(field);
+
+        // создаем левую ракетку
+        let leftRacket = document.createElementNS(svgNS, "rect");
+        leftRacket.setAttributeNS(null, "x", 6);
+        leftRacket.setAttributeNS(null, "y", topRacketLeft);
+        leftRacket.setAttributeNS(null, "width", racketWidth);
+        leftRacket.setAttributeNS(null, "height", racketHeigt);
+        leftRacket.setAttributeNS(null, "fill", "red");
+        leftRacket.setAttributeNS(null, "stroke", "black");
+        svg.appendChild(leftRacket);
+
+        // создаем правую ракетку
+        let rightRacket = document.createElementNS(svgNS, "rect");
+        rightRacket.setAttributeNS(null, "x", width - racketWidth - 6);
+        rightRacket.setAttributeNS(null, "y", topRacketRight);
+        rightRacket.setAttributeNS(null, "width", racketWidth);
+        rightRacket.setAttributeNS(null, "height", racketHeigt);
+        rightRacket.setAttributeNS(null, "fill", "blue");
+        rightRacket.setAttributeNS(null, "stroke", "black");
+        svg.appendChild(rightRacket);
+
+        // создаем мяч 
+        let circle = document.createElementNS(svgNS, "circle");
+        circle.setAttributeNS(null, "cx", xPos);
+        circle.setAttributeNS(null, "cy", yPos);
+        circle.setAttributeNS(null, "r", radius);
+        circle.setAttributeNS(null, "fill", "yellow");
+        circle.setAttributeNS(null, "stroke", "black");
+        svg.appendChild(circle);
+
+        // создаем кнопку пуск
+        let started = document.createElementNS(svgNS, "rect");
+        started.setAttributeNS(null, "x", 6);
+        started.setAttributeNS(null, "y", 6);
+        started.setAttributeNS(null, "width", 80);
+        started.setAttributeNS(null, "height", 30);
+        started.setAttributeNS(null, "fill", "grey");
+        started.setAttributeNS(null, "stroke", "black");
+        svg.appendChild(started);
+        let text = document.createElementNS(svgNS, "text");
+        text.setAttribute("stroke", "black");
+        text.setAttribute("fill", "black");
+        text.setAttribute("x", 45);
+        text.setAttribute("y", 26);
+        text.setAttribute("font-size", "24px");
+        text.setAttribute("text-anchor", "middle");
+        text.textContent = "старт";
+        svg.appendChild(text);
+
+        //создаем счет игры
+        let score = document.createElementNS(svgNS, "text");
+        score.setAttribute("stroke", "black");
+        score.setAttribute("fill", "black");
+        score.setAttribute("x", width / 2);
+        score.setAttribute("y", 35);
+        score.setAttribute("font-size", "40px");
+        score.setAttribute("text-anchor", "middle");
+        score.textContent = scoreLeft + ":" + scoreRight;
+        svg.appendChild(score);
+
+        // создаем текстовую строку "Обратный отсчет"
+        let countdown = document.createElementNS(svgNS, "text");
+        countdown.setAttribute("stroke", "black");
+        countdown.setAttribute("fill", "black");
+        countdown.setAttribute("x", width / 2);
+        countdown.setAttribute("y", 235);
+        countdown.setAttribute("font-size", "40px");
+        countdown.setAttribute("text-anchor", "middle");
+        svg.appendChild(countdown);
+
+        // создаем текстовую строку "Победитель"
+        let win = document.createElementNS(svgNS, "text");
+        win.setAttribute("stroke", "black");
+        win.setAttribute("fill", "black");
+        win.setAttribute("x", width / 2);
+        win.setAttribute("y", 235);
+        win.setAttribute("font-size", "40px");
+        win.setAttribute("text-anchor", "middle");
+        svg.appendChild(win);
+
+        var tickId;
+        var accselerationId;
+        var timerId;
+
+        //по нажатию на кнопку старт запускается функция.
+        var start = function start() {
+            xPos = 375;
+            yPos = 160;
+            speedY = Math.floor(((Math.random() * 5) < 2.5) ? -1 : 1) * (Math.random() * 5);
+            speedX = ((Math.random() < 0.5) ? -1 : 1) * speedX;
+            started.setAttributeNS(null, "x", 8);
+            started.setAttributeNS(null, "y", 8);
+            started.setAttributeNS(null, "width", 75);
+            started.setAttributeNS(null, "height", 25);
+            started.setAttributeNS(null, "fill", "white");
+            tickId = setInterval(tick, 1000 / 65);
+            accselerationId = setInterval(accseleration, 5000);
+        };
+
+        // функция ускорения мяча
+        function accseleration() {
+            if (speedX > 0) {
+                speedX++;
+            } else if (speedX < 0) {
+                speedX--;
+            }
+        };
+
+        //функция обновления
+        function restart() {
+            clearInterval(tickId);
+            clearInterval(accselerationId);
+            speedX = 2;
+            timerId = setInterval(timer, 1000);
+        };
+
+        //функция остановки игры и вывода информации о победителе
+        function stop() {
+            var color;
+            if (scoreRight == 5) {
+                color = "синяя";
+            } else {
+                color = "зеленая";
+            };
+            clearInterval(tickId);
+            clearInterval(accselerationId);
+            clearInterval(timerId);
+            score.setAttribute("stroke", "#ddf3dd");
+            score.setAttribute("fill", "#ddf3dd");
+            win.setAttribute("stroke", "black");
+            win.setAttribute("fill", "black");
+            win.textContent = "Победила " + color + " ракетка";
+        };
+
+        started.addEventListener("click", start);
+        text.addEventListener("click", start);
+
+        // создаем обратный отсчет
+        var num = 4;
+        function timer() {
+            num--;
+            countdown.setAttribute("display", "block")
+            // countdown.setAttribute("stroke", "black");
+            // countdown.setAttribute("fill", "black");
+            countdown.textContent = "Игра начнется через " + num + " c";
+            if (num == 0) {
+                countdown.setAttribute("display", "none")
+                // countdown.setAttribute("stroke", "#ddf3dd");
+                // countdown.setAttribute("fill", "#ddf3dd");
+                start();
+                timerId = clearInterval(timerId);
+                num = 4;
+            }
+        }
+
+        //создаем основную функцию по работе игры
+        function tick() {
+
+            xPos += speedX;
+            // вылетел ли мяч правее стены?
+            if (xPos + radius > fieldWidth - 2) {
+                speedX = -speedX;
+                scoreLeft += 1;
+                score.textContent = scoreLeft + ":" + scoreRight;
+                restart();
+            }
+            // вылетел ли мяч левее стены?
+            if (xPos - radius < 7) {
+                speedX = -speedX;
+                scoreRight += 1;
+                score.textContent = scoreLeft + ":" + scoreRight;
+                restart();
+            }
+            // если счет достиг 5 очков то конец игры
+            if (scoreLeft == 5 || scoreRight == 5) {
+                stop();
+            };
+
+            yPos += speedY;
+            // вылетел ли мяч ниже пола?
+            if (yPos + radius > fieldHeight + 50) {
+                speedY = -speedY;
+            }
+            // вылетел ли мяч выше потолка?
+            if (yPos - radius < 50) {
+                speedY = -speedY;
+            }
+            // ballH.update();
+            circle.setAttributeNS(null, "cx", xPos);
+            circle.setAttributeNS(null, "cy", yPos);
+
+            //Варианты, когда шарик соприкасается с ракетками
+            // правая ракетка
+            if (xPos + radius > fieldWidth - 3 - racketWidth && yPos > topRacketRight && yPos < topRacketRight + racketHeigt) {
+                speedX = -speedX;
+            };
+            // левая ракетка
+            if (xPos - radius < racketWidth + 9 && yPos > topRacketLeft && yPos < topRacketLeft + racketHeigt) {
+                speedX = -speedX;
+            };
+
+            // передвижение ракеток в зависимости от нажатых клавиш
+            if (pressKeys[40] && topRacketRight <= fieldHeight - 55) {
+                topRacketRight += 4;
+                rightRacket.setAttributeNS(null, "y", topRacketRight);
+            }
+            if (pressKeys[38] && topRacketRight > 53) {
+                topRacketRight -= 4;
+                rightRacket.setAttributeNS(null, "y", topRacketRight);
+            }
+            if (pressKeys[17] && topRacketLeft <= fieldHeight - 55) {
+                topRacketLeft += 4;
+                leftRacket.setAttributeNS(null, "y", topRacketLeft);
+            }
+            if (pressKeys[16] && topRacketLeft > 53) {
+                topRacketLeft -= 4;
+                leftRacket.setAttributeNS(null, "y", topRacketLeft);
+            }
+        };
+
+        // создаем функцию перемещения ракетки
+        var pressKeys = {};
+        addEventListener("keydown", function (event) {
+            if (event.keyCode) {
+                pressKeys[event.keyCode] = true;
+            }
+        });
+        addEventListener("keyup", function (event) {
+            if (event.keyCode) {
+                pressKeys[event.keyCode] = false;
+            }
+        });
+
+    </script>
+</body>
+
+</html>
